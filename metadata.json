@@ -1,0 +1,6 @@
+{
+  "name": "Heros Of Honour",
+  "description": "3D combined-arms tactical war game featuring tank, aircraft, naval, and infantry combat missions, online multiplayer, dynamic weather, destructible environments, deep loadout customization, and progression.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

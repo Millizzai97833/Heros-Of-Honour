@@ -1,0 +1,321 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default deny everything
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Hardened Global Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTheatre(val) {
+      return val is string && val in ['TANK', 'AIRCRAFT', 'NAVY', 'INFANTRY'];
+    }
+
+    function isValidWeather(val) {
+      return val is string && val in ['CLEAR', 'RAIN', 'SANDSTORM', 'NIGHT'];
+    }
+
+    function isValidGraphics(val) {
+      return val is string && val in ['LOW', 'MEDIUM', 'HIGH', 'ULTRA'];
+    }
+
+    function isBoundedStringList(arr, maxLen) {
+      return arr is list && arr.size() <= maxLen && (arr.size() == 0 || (arr[0] is string && arr[0].size() <= 64));
+    }
+
+    // --- Validation Helpers ---
+    function isValidPlayerProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.callsign is string && data.callsign.size() >= 2 && data.callsign.size() <= 30 &&
+             data.coins is int && data.coins >= 0 && data.coins <= 10000000 &&
+             data.xp is int && data.xp >= 0 && data.xp <= 10000000 &&
+             data.level is int && data.level >= 1 && data.level <= 200 &&
+             data.skillPoints is int && data.skillPoints >= 0 && data.skillPoints <= 500 &&
+             data.eloRating is int && data.eloRating >= 100 && data.eloRating <= 10000 &&
+             data.wins is int && data.wins >= 0 && data.wins <= 100000 &&
+             data.matchesPlayed is int && data.matchesPlayed >= 0 && data.matchesPlayed <= 200000 &&
+             data.loginStreak is int && data.loginStreak >= 0 && data.loginStreak <= 7 &&
+             data.lastDailyClaimDay is string && data.lastDailyClaimDay.size() <= 20 &&
+             isBoundedStringList(data.unlockedSkins, 30) &&
+             isBoundedStringList(data.unlockedWeapons, 40) &&
+             isBoundedStringList(data.unlockedSkills, 30) &&
+             isBoundedStringList(data.completedMissions, 30) &&
+             data.equippedSkin is string && data.equippedSkin.size() >= 1 && data.equippedSkin.size() <= 40 &&
+             isValidTheatre(data.equippedTheatre) &&
+             data.equippedWeapon is string && data.equippedWeapon.size() >= 1 && data.equippedWeapon.size() <= 40 &&
+             data.equippedMuzzle is string && data.equippedMuzzle.size() >= 1 && data.equippedMuzzle.size() <= 40 &&
+             data.equippedOptic is string && data.equippedOptic.size() >= 1 && data.equippedOptic.size() <= 40 &&
+             data.equippedArmor is string && data.equippedArmor.size() >= 1 && data.equippedArmor.size() <= 40 &&
+             data.equippedAmmo is string && data.equippedAmmo.size() >= 1 && data.equippedAmmo.size() <= 40 &&
+             isValidGraphics(data.graphicsQuality) &&
+             data.integrityScore is int && data.integrityScore >= 0 && data.integrityScore <= 100 &&
+             data.adCooldownEpochSec is int && data.adCooldownEpochSec >= 0 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidMatchLog(data) {
+      return data.mode is string && data.mode in ['CAMPAIGN', 'MULTIPLAYER'] &&
+             isValidTheatre(data.theatre) &&
+             data.missionId is string && data.missionId.size() >= 1 && data.missionId.size() <= 64 &&
+             data.kills is int && data.kills >= 0 && data.kills <= 200 &&
+             data.damageDealt is int && data.damageDealt >= 0 && data.damageDealt <= 50000 &&
+             data.shotsFired is int && data.shotsFired >= 0 && data.shotsFired <= 2000 &&
+             data.accuracyPct is int && data.accuracyPct >= 0 && data.accuracyPct <= 100 &&
+             data.durationSec is int && data.durationSec >= 1 && data.durationSec <= 3600 &&
+             data.integrityPassed is bool &&
+             isBoundedStringList(data.cheatFlags, 10) &&
+             data.telemetryChecksum is string && data.telemetryChecksum.size() >= 8 && data.telemetryChecksum.size() <= 128 &&
+             data.coinsAwarded is int && data.coinsAwarded >= 0 && data.coinsAwarded <= 5000 &&
+             data.xpAwarded is int && data.xpAwarded >= 0 && data.xpAwarded <= 3000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidMatchRoom(data) {
+      return data.hostUid is string && data.hostUid.size() >= 1 && data.hostUid.size() <= 128 &&
+             data.hostName is string && data.hostName.size() >= 2 && data.hostName.size() <= 30 &&
+             data.guestUid is string && data.guestUid.size() <= 128 &&
+             data.guestName is string && data.guestName.size() <= 30 &&
+             data.memberUids is list && data.memberUids.size() >= 1 && data.memberUids.size() <= 2 &&
+             data.memberUids[0] == data.hostUid &&
+             isValidTheatre(data.theatre) &&
+             isValidWeather(data.weather) &&
+             data.status is string && data.status in ['WAITING', 'ACTIVE', 'FINISHED'] &&
+             data.hostScore is int && data.hostScore >= 0 && data.hostScore <= 500 &&
+             data.guestScore is int && data.guestScore >= 0 && data.guestScore <= 500 &&
+             data.hostHp is int && data.hostHp >= 0 && data.hostHp <= 1000 &&
+             data.guestHp is int && data.guestHp >= 0 && data.guestHp <= 1000 &&
+             data.hostX is number && data.hostX >= -200 && data.hostX <= 200 &&
+             data.hostZ is number && data.hostZ >= -200 && data.hostZ <= 200 &&
+             data.hostYaw is number && data.hostYaw >= -360 && data.hostYaw <= 360 &&
+             data.guestX is number && data.guestX >= -200 && data.guestX <= 200 &&
+             data.guestZ is number && data.guestZ >= -200 && data.guestZ <= 200 &&
+             data.guestYaw is number && data.guestYaw >= -360 && data.guestYaw <= 360 &&
+             data.winnerUid is string && data.winnerUid.size() <= 128 &&
+             data.antiCheatHash is string && data.antiCheatHash.size() >= 6 && data.antiCheatHash.size() <= 128 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidLeaderboardEntry(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.callsign is string && data.callsign.size() >= 2 && data.callsign.size() <= 30 &&
+             data.eloRating is int && data.eloRating >= 100 && data.eloRating <= 10000 &&
+             data.wins is int && data.wins >= 0 && data.wins <= 100000 &&
+             data.level is int && data.level >= 1 && data.level <= 200 &&
+             isValidTheatre(data.favouriteTheatre) &&
+             data.verified is bool &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // --- Collection Rules ---
+
+    // 1. Player Profile (Strictly owner-isolated, anti-cheat delta caps)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isValidId(userId) &&
+                       isOwner(userId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().coins <= 1500 &&
+                       incoming().xp <= 500 &&
+                       incoming().level == 1 &&
+                       incoming().integrityScore == 100 &&
+                       incoming().keys().hasAll([
+                         'userId', 'callsign', 'coins', 'xp', 'level', 'skillPoints',
+                         'eloRating', 'wins', 'matchesPlayed', 'loginStreak',
+                         'lastDailyClaimDay', 'unlockedSkins', 'unlockedWeapons',
+                         'unlockedSkills', 'completedMissions', 'equippedSkin',
+                         'equippedTheatre', 'equippedWeapon', 'equippedMuzzle',
+                         'equippedOptic', 'equippedArmor', 'equippedAmmo',
+                         'graphicsQuality', 'integrityScore', 'adCooldownEpochSec',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'callsign', 'coins', 'xp', 'level', 'skillPoints',
+                         'eloRating', 'wins', 'matchesPlayed', 'loginStreak',
+                         'lastDailyClaimDay', 'unlockedSkins', 'unlockedWeapons',
+                         'unlockedSkills', 'completedMissions', 'equippedSkin',
+                         'equippedTheatre', 'equippedWeapon', 'equippedMuzzle',
+                         'equippedOptic', 'equippedArmor', 'equippedAmmo',
+                         'graphicsQuality', 'integrityScore', 'adCooldownEpochSec',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidPlayerProfile(incoming());
+
+      allow update: if isValidId(userId) &&
+                       isOwner(userId) &&
+                       isValidPlayerProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       // Anti-cheat currency & XP delta bounds per transaction
+                       (incoming().coins - existing().coins) <= 5000 &&
+                       (incoming().xp - existing().xp) <= 3000 &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'callsign', 'coins', 'xp', 'level', 'skillPoints',
+                         'eloRating', 'wins', 'matchesPlayed', 'loginStreak',
+                         'lastDailyClaimDay', 'unlockedSkins', 'unlockedWeapons',
+                         'unlockedSkills', 'completedMissions', 'equippedSkin',
+                         'equippedTheatre', 'equippedWeapon', 'equippedMuzzle',
+                         'equippedOptic', 'equippedArmor', 'equippedAmmo',
+                         'graphicsQuality', 'integrityScore', 'adCooldownEpochSec',
+                         'updatedAt'
+                       ]);
+
+      allow delete: if isValidId(userId) && isOwner(userId);
+
+      // 1b. Anti-Cheat Match Audit Subcollection (Append-only)
+      match /match_logs/{logId} {
+        allow get: if isValidId(userId) && isValidId(logId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId);
+
+        allow create: if isValidId(userId) &&
+                         isValidId(logId) &&
+                         isOwner(userId) &&
+                         incoming().keys().hasAll([
+                           'mode', 'theatre', 'missionId', 'kills', 'damageDealt',
+                           'shotsFired', 'accuracyPct', 'durationSec', 'integrityPassed',
+                           'cheatFlags', 'telemetryChecksum', 'coinsAwarded',
+                           'xpAwarded', 'createdAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'mode', 'theatre', 'missionId', 'kills', 'damageDealt',
+                           'shotsFired', 'accuracyPct', 'durationSec', 'integrityPassed',
+                           'cheatFlags', 'telemetryChecksum', 'coinsAwarded',
+                           'xpAwarded', 'createdAt'
+                         ]) &&
+                         isValidMatchLog(incoming());
+
+        allow update, delete: if false;
+      }
+    }
+
+    // 2. Multiplayer Match Rooms (Member-scoped + WAITING lobby discovery + Terminal state lock)
+    match /match_rooms/{roomId} {
+      allow get: if isValidId(roomId) && isSignedIn() && (
+        request.auth.uid in existing().memberUids ||
+        existing().status == 'WAITING'
+      );
+
+      allow list: if isSignedIn() && (
+        request.auth.uid in resource.data.memberUids ||
+        resource.data.status == 'WAITING'
+      );
+
+      allow create: if isValidId(roomId) &&
+                       isSignedIn() &&
+                       incoming().hostUid == request.auth.uid &&
+                       incoming().guestUid == '' &&
+                       incoming().memberUids.size() == 1 &&
+                       incoming().memberUids[0] == request.auth.uid &&
+                       incoming().status == 'WAITING' &&
+                       incoming().winnerUid == '' &&
+                       incoming().keys().hasAll([
+                         'hostUid', 'hostName', 'guestUid', 'guestName', 'memberUids',
+                         'theatre', 'weather', 'status', 'hostScore', 'guestScore',
+                         'hostHp', 'guestHp', 'hostX', 'hostZ', 'hostYaw',
+                         'guestX', 'guestZ', 'guestYaw', 'winnerUid', 'antiCheatHash',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'hostUid', 'hostName', 'guestUid', 'guestName', 'memberUids',
+                         'theatre', 'weather', 'status', 'hostScore', 'guestScore',
+                         'hostHp', 'guestHp', 'hostX', 'hostZ', 'hostYaw',
+                         'guestX', 'guestZ', 'guestYaw', 'winnerUid', 'antiCheatHash',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidMatchRoom(incoming());
+
+      allow update: if isValidId(roomId) &&
+                       isSignedIn() &&
+                       isValidMatchRoom(incoming()) &&
+                       existing().status != 'FINISHED' &&
+                       incoming().hostUid == existing().hostUid &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Action 1: Guest joins a WAITING room
+                         (
+                           existing().status == 'WAITING' &&
+                           existing().guestUid == '' &&
+                           request.auth.uid != existing().hostUid &&
+                           incoming().status == 'ACTIVE' &&
+                           incoming().guestUid == request.auth.uid &&
+                           incoming().memberUids.size() == 2 &&
+                           incoming().memberUids[0] == existing().hostUid &&
+                           incoming().memberUids[1] == request.auth.uid &&
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'guestUid', 'guestName', 'memberUids', 'status', 'updatedAt'
+                           ])
+                         ) ||
+                         // Action 2: Host starts solo-vs-bot/training or active telemetry sync
+                         (
+                           request.auth.uid in existing().memberUids &&
+                           incoming().memberUids == existing().memberUids &&
+                           incoming().guestUid == existing().guestUid &&
+                           incoming().status in ['ACTIVE', 'FINISHED'] &&
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'status', 'weather', 'hostScore', 'guestScore',
+                             'hostHp', 'guestHp', 'hostX', 'hostZ', 'hostYaw',
+                             'guestX', 'guestZ', 'guestYaw', 'winnerUid',
+                             'antiCheatHash', 'updatedAt'
+                           ])
+                         )
+                       );
+
+      allow delete: if isValidId(roomId) && isSignedIn() && existing().hostUid == request.auth.uid;
+    }
+
+    // 3. Public Competitive Leaderboard (PII-free, verified entries only)
+    match /leaderboard/{userId} {
+      allow get: if isValidId(userId) && isSignedIn() && existing().verified == true;
+      allow list: if isSignedIn() && resource.data.verified == true;
+
+      allow create: if isValidId(userId) &&
+                       isOwner(userId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().verified == true &&
+                       incoming().keys().hasAll([
+                         'userId', 'callsign', 'eloRating', 'wins',
+                         'level', 'favouriteTheatre', 'verified', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'callsign', 'eloRating', 'wins',
+                         'level', 'favouriteTheatre', 'verified', 'updatedAt'
+                       ]) &&
+                       isValidLeaderboardEntry(incoming());
+
+      allow update: if isValidId(userId) &&
+                       isOwner(userId) &&
+                       isValidLeaderboardEntry(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().verified == true &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'callsign', 'eloRating', 'wins', 'level', 'favouriteTheatre', 'updatedAt'
+                       ]);
+
+      allow delete: if isValidId(userId) && isOwner(userId);
+    }
+  }
+}

@@ -1,0 +1,328 @@
+{
+  "entities": {
+    "PlayerProfile": {
+      "title": "PlayerProfile",
+      "description": "Authenticated player profile storing progression, coins, skins, weapon loadouts, daily login streak, graphics preferences, and anti-cheat integrity score.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID owning this profile."
+        },
+        "callsign": {
+          "type": "string",
+          "description": "Commander display name."
+        },
+        "coins": {
+          "type": "integer",
+          "description": "In-game currency earned from missions, daily rewards, and rewarded ads."
+        },
+        "xp": {
+          "type": "integer",
+          "description": "Total combat experience points."
+        },
+        "level": {
+          "type": "integer",
+          "description": "Commander rank level."
+        },
+        "skillPoints": {
+          "type": "integer",
+          "description": "Available points for unlocking combat skills."
+        },
+        "eloRating": {
+          "type": "integer",
+          "description": "Competitive multiplayer ELO rating."
+        },
+        "wins": {
+          "type": "integer",
+          "description": "Total victories."
+        },
+        "matchesPlayed": {
+          "type": "integer",
+          "description": "Total matches completed."
+        },
+        "loginStreak": {
+          "type": "integer",
+          "description": "Current 7-day daily reward streak count (0-7)."
+        },
+        "lastDailyClaimDay": {
+          "type": "string",
+          "description": "UTC date string YYYY-MM-DD of the most recent daily login reward claim."
+        },
+        "unlockedSkins": {
+          "type": "array",
+          "description": "Owned vehicle and character skin IDs."
+        },
+        "unlockedWeapons": {
+          "type": "array",
+          "description": "Owned weapon IDs."
+        },
+        "unlockedSkills": {
+          "type": "array",
+          "description": "Unlocked combat skill IDs."
+        },
+        "completedMissions": {
+          "type": "array",
+          "description": "Completed campaign mission IDs."
+        },
+        "equippedSkin": {
+          "type": "string",
+          "description": "Active skin ID."
+        },
+        "equippedTheatre": {
+          "type": "string",
+          "enum": ["TANK", "AIRCRAFT", "NAVY", "INFANTRY"],
+          "description": "Active combat branch."
+        },
+        "equippedWeapon": {
+          "type": "string",
+          "description": "Active primary weapon ID."
+        },
+        "equippedMuzzle": {
+          "type": "string",
+          "description": "Active muzzle attachment ID."
+        },
+        "equippedOptic": {
+          "type": "string",
+          "description": "Active optic attachment ID."
+        },
+        "equippedArmor": {
+          "type": "string",
+          "description": "Active armor plating ID."
+        },
+        "equippedAmmo": {
+          "type": "string",
+          "description": "Active ammo payload ID."
+        },
+        "graphicsQuality": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH", "ULTRA"],
+          "description": "Saved 3D graphics preset."
+        },
+        "integrityScore": {
+          "type": "integer",
+          "description": "Anti-cheat trust score from 0 to 100."
+        },
+        "adCooldownEpochSec": {
+          "type": "integer",
+          "description": "Epoch seconds of last rewarded ad claim."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was last updated."
+        }
+      },
+      "required": [
+        "userId",
+        "callsign",
+        "coins",
+        "xp",
+        "level",
+        "skillPoints",
+        "eloRating",
+        "wins",
+        "matchesPlayed",
+        "loginStreak",
+        "lastDailyClaimDay",
+        "unlockedSkins",
+        "unlockedWeapons",
+        "unlockedSkills",
+        "completedMissions",
+        "equippedSkin",
+        "equippedTheatre",
+        "equippedWeapon",
+        "equippedMuzzle",
+        "equippedOptic",
+        "equippedArmor",
+        "equippedAmmo",
+        "graphicsQuality",
+        "integrityScore",
+        "adCooldownEpochSec",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MatchLog": {
+      "title": "MatchLog",
+      "description": "Immutable anti-cheat verified match telemetry audit record.",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["CAMPAIGN", "MULTIPLAYER"]
+        },
+        "theatre": {
+          "type": "string",
+          "enum": ["TANK", "AIRCRAFT", "NAVY", "INFANTRY"]
+        },
+        "missionId": {
+          "type": "string"
+        },
+        "kills": {
+          "type": "integer"
+        },
+        "damageDealt": {
+          "type": "integer"
+        },
+        "shotsFired": {
+          "type": "integer"
+        },
+        "accuracyPct": {
+          "type": "integer"
+        },
+        "durationSec": {
+          "type": "integer"
+        },
+        "integrityPassed": {
+          "type": "boolean"
+        },
+        "cheatFlags": {
+          "type": "array"
+        },
+        "telemetryChecksum": {
+          "type": "string"
+        },
+        "coinsAwarded": {
+          "type": "integer"
+        },
+        "xpAwarded": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "mode",
+        "theatre",
+        "missionId",
+        "kills",
+        "damageDealt",
+        "shotsFired",
+        "accuracyPct",
+        "durationSec",
+        "integrityPassed",
+        "cheatFlags",
+        "telemetryChecksum",
+        "coinsAwarded",
+        "xpAwarded",
+        "createdAt"
+      ]
+    },
+    "MatchRoom": {
+      "title": "MatchRoom",
+      "description": "Real-time online multiplayer combat lobby and arena synchronization document.",
+      "type": "object",
+      "properties": {
+        "hostUid": { "type": "string" },
+        "hostName": { "type": "string" },
+        "guestUid": { "type": "string" },
+        "guestName": { "type": "string" },
+        "memberUids": { "type": "array" },
+        "theatre": {
+          "type": "string",
+          "enum": ["TANK", "AIRCRAFT", "NAVY", "INFANTRY"]
+        },
+        "weather": {
+          "type": "string",
+          "enum": ["CLEAR", "RAIN", "SANDSTORM", "NIGHT"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["WAITING", "ACTIVE", "FINISHED"]
+        },
+        "hostScore": { "type": "integer" },
+        "guestScore": { "type": "integer" },
+        "hostHp": { "type": "integer" },
+        "guestHp": { "type": "integer" },
+        "hostX": { "type": "number" },
+        "hostZ": { "type": "number" },
+        "hostYaw": { "type": "number" },
+        "guestX": { "type": "number" },
+        "guestZ": { "type": "number" },
+        "guestYaw": { "type": "number" },
+        "winnerUid": { "type": "string" },
+        "antiCheatHash": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "hostUid",
+        "hostName",
+        "guestUid",
+        "guestName",
+        "memberUids",
+        "theatre",
+        "weather",
+        "status",
+        "hostScore",
+        "guestScore",
+        "hostHp",
+        "guestHp",
+        "hostX",
+        "hostZ",
+        "hostYaw",
+        "guestX",
+        "guestZ",
+        "guestYaw",
+        "winnerUid",
+        "antiCheatHash",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Public competitive commander ranking with no PII.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "callsign": { "type": "string" },
+        "eloRating": { "type": "integer" },
+        "wins": { "type": "integer" },
+        "level": { "type": "integer" },
+        "favouriteTheatre": {
+          "type": "string",
+          "enum": ["TANK", "AIRCRAFT", "NAVY", "INFANTRY"]
+        },
+        "verified": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "callsign",
+        "eloRating",
+        "wins",
+        "level",
+        "favouriteTheatre",
+        "verified",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/PlayerProfile" },
+      "description": "Authenticated player profile and progression state."
+    },
+    "/users/{userId}/match_logs/{logId}": {
+      "schema": { "$ref": "#/entities/MatchLog" },
+      "description": "Immutable anti-cheat match telemetry logs owned by the player."
+    },
+    "/match_rooms/{roomId}": {
+      "schema": { "$ref": "#/entities/MatchRoom" },
+      "description": "Real-time competitive multiplayer battle rooms."
+    },
+    "/leaderboard/{userId}": {
+      "schema": { "$ref": "#/entities/LeaderboardEntry" },
+      "description": "Verified competitive leaderboard entries."
+    }
+  }
+}
